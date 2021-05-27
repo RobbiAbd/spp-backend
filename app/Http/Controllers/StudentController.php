@@ -73,4 +73,40 @@ class StudentController extends Controller
             return $this->writeResponse(self::HTTP_STATUS_ERROR, $e->getMessage(), false);
         }
     }
+
+    public function updateStudent(Request $request, $id)
+    {
+        DB::beginTransaction();
+        try {
+            $validator = Validator::make(
+                $request->all(),
+                [
+                    'nisn' => 'required|numeric|unique:students,nisn,'.$id,
+                    'name' => 'required|regex:/^[\pL\s\-]+$/u|max:100',
+                    'address' => 'required|max:200',
+                    'class_id' => 'required|numeric',
+                ],
+            );
+
+            if ($validator->fails()) {
+                return $this->writeResponse(self::HTTP_STATUS_ERROR, $validator->messages()->get('*'), false);
+            }
+
+            $model = Student::find($id);
+            if (!$model) {
+                throw new \Exception('error: student not found', 500);
+            }
+            $model->fill($request->all());
+
+            if (!$model->save()) {
+                throw new \Exception('error: updated students failed', 500);
+            }
+
+            DB::commit();
+            return $this->writeResponse(self::HTTP_STATUS_SUCCESS, 'updated success', true);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->writeResponse(self::HTTP_STATUS_ERROR, $e->getMessage(), false);
+        }
+    }
 }

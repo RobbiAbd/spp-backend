@@ -24,7 +24,7 @@ class CorsMiddleware
         ];
 
         if ($request->isMethod('OPTIONS')) {
-            return response()->json('{"method":"OPTIONS"}', 200, $headers);
+            return response()->json(["method" => "OPTIONS"], 200, $headers);
         }
 
         $response = $next($request);

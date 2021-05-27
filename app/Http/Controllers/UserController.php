@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
-    public function showAllUsers()
+    public function showAllUsers(Request $request)
     {
         try {
             $data = User::with('levelRelationship')->paginate(10);
@@ -25,7 +25,7 @@ class UserController extends Controller
         }
     }
 
-    public function showOneUser($id)
+    public function showOneUser(Request $request, $id)
     {
         try {
             $data = User::with('levelRelationship')->find($id);
@@ -62,6 +62,41 @@ class UserController extends Controller
 
             DB::commit();
             return $this->writeResponse(self::HTTP_STATUS_CREATED, 'created success', true);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->writeResponse(self::HTTP_STATUS_ERROR, $e->getMessage(), false);
+        }
+    }
+
+    public function updateUser(Request $request, $id)
+    {
+        DB::beginTransaction();
+        try {
+            $validator = Validator::make(
+                $request->all(),
+                [
+                    'name' => 'required|regex:/^[\pL\s\-]+$/u|max:100',
+                    'level_id' => 'required|numeric',
+                    'is_active' => 'required|numeric',
+                ],
+            );
+
+            if ($validator->fails()) {
+                return $this->writeResponse(self::HTTP_STATUS_ERROR, $validator->messages()->get('*'), false);
+            }
+
+            $model = User::find($id);
+            if (!$model) {
+                throw new \Exception('error: user not found', 500);
+            }
+            $model->fill($request->all());
+
+            if (!$model->save()) {
+                throw new \Exception('error: updated user failed', 500);
+            }
+
+            DB::commit();
+            return $this->writeResponse(self::HTTP_STATUS_SUCCESS, 'updated success', true);
         } catch (\Exception $e) {
             DB::rollBack();
             return $this->writeResponse(self::HTTP_STATUS_ERROR, $e->getMessage(), false);
