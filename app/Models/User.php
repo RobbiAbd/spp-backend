@@ -19,7 +19,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'username', 'is_active'
+        'name', 'email', 'username', 'is_active', 'level_id'
     ];
 
     /**
@@ -30,4 +30,21 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     protected $hidden = [
         'password',
     ];
+
+    public function rules()
+    {
+        return [
+            'name' => 'required|regex:/^[\pL\s\-]+$/u|max:100',
+            'username' => 'required|unique:users|max:200',
+            'email' => 'required|email|unique:users',
+            'password' => 'required',
+            'level_id' => 'required|numeric',
+            'is_active' => 'required|numeric',
+        ];
+    }
+
+    public function levelRelationship()
+    {
+        return $this->belongsTo(Level::class, 'level_id', 'id');
+    }
 }

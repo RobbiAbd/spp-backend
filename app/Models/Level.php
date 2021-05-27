@@ -9,4 +9,9 @@ class Level extends Model
     protected $fillable = [
         'name',
     ];
+
+    public function classRelationship()
+    {
+        return $this->hasOne(User::class);
+    }
 }

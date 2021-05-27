@@ -4,18 +4,19 @@ namespace App\Http\Controllers;
 
 use Validator;
 use Illuminate\Http\Request;
-use App\Models\Student;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
-class StudentController extends Controller
+class UserController extends Controller
 {
-    public function showAllStudents()
+    public function showAllUsers()
     {
         try {
-            $data = Student::with('classRelationship')->paginate(10);
+            $data = User::with('levelRelationship')->paginate(10);
 
             if (!$data) {
-                throw new \Exception('error: students not found', 500);
+                throw new \Exception('error: users not found', 500);
             }
 
             return $this->writeResponseBody(self::HTTP_STATUS_SUCCESS, '', $data, true);
@@ -24,13 +25,13 @@ class StudentController extends Controller
         }
     }
 
-    public function showOneStudent($id)
+    public function showOneUser($id)
     {
         try {
-            $data = Student::with('classRelationship')->find($id);
+            $data = User::with('levelRelationship')->find($id);
 
             if (!$data) {
-                throw new \Exception('error: student not found', 500);
+                throw new \Exception('error: user not found', 500);
             }
 
             return $this->writeResponseBody(self::HTTP_STATUS_SUCCESS, '', $data, true);
@@ -39,31 +40,24 @@ class StudentController extends Controller
         }
     }
 
-    public function storeStudents(Request $request)
+    public function storeUser(Request $request)
     {
         DB::beginTransaction();
         try {
+            $model = new User();
             $validator = Validator::make(
                 $request->all(),
-                [
-                    'students.*.nisn' => 'required|numeric|unique:students',
-                    'students.*.name' => 'required|regex:/^[\pL\s\-]+$/u|max:100',
-                    'students.*.address' => 'required|max:200',
-                    'students.*.class_id' => 'required|numeric',
-                ],
+                $model->rules(),
             );
 
             if ($validator->fails()) {
                 return $this->writeResponse(self::HTTP_STATUS_ERROR, $validator->messages()->get('*'), false);
             }
+            $model->fill($request->all());
+            $model->password = Hash::make($request->post('password'));
 
-            foreach ($request->all()['students'] as $student) {
-                $model = new Student();
-                $model->fill($student);
-
-                if (!$model->save()) {
-                    throw new \Exception('error: created students failed', 500);
-                }
+            if (!$model->save()) {
+                throw new \Exception('error: created user failed', 500);
             }
 
             DB::commit();
