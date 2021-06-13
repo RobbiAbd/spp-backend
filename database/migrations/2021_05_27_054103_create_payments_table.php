@@ -18,8 +18,9 @@ class CreatePaymentsTable extends Migration
             $table->integer('nominal');
             $table->date('periode_start');
             $table->date('periode_end');
+            $table->bigInteger('user_id');
             $table->bigInteger('student_id');
-            $table->bigInteger('type_of_payment_id');
+            $table->bigInteger('payment_type_id');
             $table->timestamps();
         });
     }

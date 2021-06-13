@@ -24,8 +24,13 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('students', ['uses' => 'StudentController@storeStudents']);
     $router->put('students/{id}', ['uses' => 'StudentController@updateStudent']);
 
-    $router->get('users', ['uses' => 'UserController@showAllusers']);
+    $router->get('users', ['uses' => 'UserController@showAllUsers']);
     $router->get('users/{id}', ['uses' => 'UserController@showOneUser']);
     $router->post('users', ['uses' => 'UserController@storeUser']);
     $router->put('users/{id}', ['uses' => 'UserController@updateUser']);
+
+    $router->get('payments', ['uses' => 'PaymentController@showAllPaymentsHistory']);
+    $router->get('payments/{id}', ['uses' => 'PaymentController@showOnePaymentHistory']);
+    $router->post('payments', ['uses' => 'PaymentController@storePayment']);
+    $router->put('payments/{id}', ['uses' => 'PaymentController@updatePayment']);
 });

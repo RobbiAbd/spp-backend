@@ -2,21 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Payment;
 use Validator;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
-class UserController extends Controller
+class PaymentController extends Controller
 {
-    public function showAllUsers()
+    public function showAllPaymentsHistory()
     {
         try {
-            $data = User::with('levelRelationship')->paginate(10);
+            $data = Payment::paginate(10);
 
             if (!$data) {
-                throw new \Exception('error: users not found', 500);
+                throw new \Exception('error: payments not found', 500);
             }
 
             return $this->writeResponseBody(self::HTTP_STATUS_SUCCESS, '', $data, true);
@@ -25,13 +25,13 @@ class UserController extends Controller
         }
     }
 
-    public function showOneUser($id)
+    public function showOnePaymentHistory($id)
     {
         try {
-            $data = User::with('levelRelationship')->find($id);
+            $data = Payment::find($id);
 
             if (!$data) {
-                throw new \Exception('error: user not found', 500);
+                throw new \Exception('error: payment not found', 500);
             }
 
             return $this->writeResponseBody(self::HTTP_STATUS_SUCCESS, '', $data, true);
@@ -40,11 +40,11 @@ class UserController extends Controller
         }
     }
 
-    public function storeUser(Request $request)
+    public function storePayment(Request $request)
     {
         DB::beginTransaction();
         try {
-            $model = new User();
+            $model = new Payment();
             $validator = Validator::make(
                 $request->all(),
                 $model->rules(),
@@ -57,7 +57,7 @@ class UserController extends Controller
             $model->password = Hash::make($request->post('password'));
 
             if (!$model->save()) {
-                throw new \Exception('error: created user failed', 500);
+                throw new \Exception('error: created payment failed', 500);
             }
 
             DB::commit();
@@ -68,16 +68,19 @@ class UserController extends Controller
         }
     }
 
-    public function updateUser(Request $request, $id)
+    public function updatePayment(Request $request, $id)
     {
         DB::beginTransaction();
         try {
             $validator = Validator::make(
                 $request->all(),
                 [
-                    'name' => 'required|regex:/^[\pL\s\-]+$/u|max:100',
-                    'level_id' => 'required|numeric',
-                    'is_active' => 'required|numeric',
+                    'nominal' => 'required|numeric',
+                    'periode_start' => 'required|date_format:Y:m:d|before:periode_end',
+                    'periode_end' => 'required|date_format:Y:m:d|after:periode_start',
+                    'user_id' => 'required|numeric',
+                    'student_id' => 'required|numeric',
+                    'payment_type_id' => 'required|numeric',
                 ],
             );
 
@@ -85,14 +88,14 @@ class UserController extends Controller
                 return $this->writeResponse(self::HTTP_STATUS_ERROR, $validator->messages()->get('*'), false);
             }
 
-            $model = User::find($id);
+            $model = Payment::find($id);
             if (!$model) {
-                throw new \Exception('error: user not found', 500);
+                throw new \Exception('error: payment not found', 500);
             }
             $model->fill($request->all());
 
             if (!$model->save()) {
-                throw new \Exception('error: updated user failed', 500);
+                throw new \Exception('error: updated payment failed', 500);
             }
 
             DB::commit();
